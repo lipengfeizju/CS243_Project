@@ -17,12 +17,13 @@ def str2bool(v):
 
 
 experiment_id = "D3Feat" + time.strftime('%m%d%H%M')
+# experiment_id = "D3Feat06042356"
 # snapshot configurations
 snapshot_arg = add_argument_group('Snapshot')
-snapshot_arg.add_argument('--snapshot_dir', type=str, default=f'/data/D3Feat/snapshot/{experiment_id}')
-snapshot_arg.add_argument('--tboard_dir', type=str, default=f'/data/D3Feat/tensorboard/{experiment_id}')
+snapshot_arg.add_argument('--snapshot_dir', type=str, default=f'./data/D3Feat/snapshot/{experiment_id}')
+snapshot_arg.add_argument('--tboard_dir', type=str, default=f'./data/D3Feat/tensorboard/{experiment_id}')
 snapshot_arg.add_argument('--snapshot_interval', type=int, default=100)
-snapshot_arg.add_argument('--save_dir', type=str, default=os.path.join(f'/data/D3Feat/snapshot/{experiment_id}', 'models/'))
+snapshot_arg.add_argument('--save_dir', type=str, default=os.path.join(f'./data/D3Feat/snapshot/{experiment_id}', 'models/'))
 
 # Network configurations
 net_arg = add_argument_group('Network')
@@ -56,6 +57,7 @@ loss_arg.add_argument('--safe_radius', type=float, default=0.1)
 loss_arg.add_argument('--det_loss', type=str, default='score')
 loss_arg.add_argument('--desc_loss_weight', type=float, default=1.0)
 loss_arg.add_argument('--det_loss_weight', type=float, default=1.0)
+loss_arg.add_argument('--dist_type', type=str, default='euclidean')
 
 # Optimizer configurations
 opt_arg = add_argument_group('Optimizer')
@@ -73,7 +75,7 @@ opt_arg.add_argument('--grad_clip_norm', type=float, default=100.0)
 
 # Dataset and dataloader configurations
 data_arg = add_argument_group('Data')
-data_arg.add_argument('--root', type=str, default='/data/3DMatch/')
+data_arg.add_argument('--root', type=str, default='./data/3DMatch/')
 data_arg.add_argument('--num_node', type=int, default=128)
 data_arg.add_argument('--downsample', type=float, default=0.03)
 data_arg.add_argument('--self_augment', type=str2bool, default=False)

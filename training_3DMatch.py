@@ -43,18 +43,24 @@ if __name__ == '__main__':
     # create model 
     config.architecture = [
         'simple',
-        'resnetb',
+        'resnetb_attan',
     ]
     for i in range(config.num_layers-1):
         config.architecture.append('resnetb_strided')
         config.architecture.append('resnetb')
-        config.architecture.append('resnetb')
+        config.architecture.append('resnetb_attan')
     for i in range(config.num_layers-2):
         config.architecture.append('nearest_upsample')
         config.architecture.append('unary')
     config.architecture.append('nearest_upsample')
     config.architecture.append('last_unary')
     print("Network Architecture:\n", "".join([layer+'\n' for layer in config.architecture]))
+
+    config.attention = []
+    for i in range(config.num_layers-1):
+        config.attention.append('resnetb_strided')
+    
+    config.concat = ['unary']
 
     config.model = KPFCNN(config)
     

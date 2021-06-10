@@ -416,6 +416,7 @@ def block_decider(block_name,
         return SimpleBlock(block_name, in_dim, out_dim, radius, layer_ind, config)
 
     elif block_name in ['resnetb',
+                        'resnetb_attan', ### add attention
                         'resnetb_invariant',
                         'resnetb_equivariant',
                         'resnetb_deformable',

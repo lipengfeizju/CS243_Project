@@ -214,6 +214,7 @@ class KPFCNN(nn.Module):
         self.encoder_blocks = nn.ModuleList()
         self.encoder_skip_dims = []
         self.encoder_skips = []
+        self.encoder_attan = []
 
         # Loop over consecutive blocks
         for block_i, block in enumerate(config.architecture):
@@ -226,6 +227,9 @@ class KPFCNN(nn.Module):
             if np.any([tmp in block for tmp in ['pool', 'strided', 'upsample', 'global']]):
                 self.encoder_skips.append(block_i)
                 self.encoder_skip_dims.append(in_dim)
+            
+            if np.any([tmp in block for tmp in ['attan']]):  ### add attention
+                self.encoder_attan.append(block_i)
 
             # Detect upsampling block to stop
             if 'upsample' in block:
@@ -251,7 +255,6 @@ class KPFCNN(nn.Module):
                 layer += 1
                 r *= 2
                 out_dim *= 2
-
         #####################
         # List Decoder blocks
         #####################
@@ -267,14 +270,13 @@ class KPFCNN(nn.Module):
                 start_i = block_i
                 break
 
+        # in_dim *= 6
         # Loop over consecutive blocks
         for block_i, block in enumerate(config.architecture[start_i:]):
-
             # Add dimension of skip connection concat
             if block_i > 0 and 'upsample' in config.architecture[start_i + block_i - 1]:
                 in_dim += self.encoder_skip_dims[layer]
                 self.decoder_concats.append(block_i)
-
             # Apply the good block function defining tf ops
             self.decoder_blocks.append(block_decider(block,
                                                     r,
@@ -282,7 +284,6 @@ class KPFCNN(nn.Module):
                                                     out_dim,
                                                     layer,
                                                     config))
-
             # Update dimension of input from output
             in_dim = out_dim
 
@@ -294,6 +295,38 @@ class KPFCNN(nn.Module):
                 out_dim = out_dim // 2
 
         print(self)
+
+        self.attention_blocks = nn.ModuleList()
+        layer = 3
+        r = 0.6
+        out_dim = 512
+        for block_i, block in enumerate(config.attention):
+            # Apply the good block function defining tf ops
+            
+            self.attention_blocks.append(block_decider(block,
+                                                    r,
+                                                    in_dim,
+                                                    out_dim,
+                                                    layer,
+                                                    config))
+            in_dim *= 2
+            
+        self.concat_blocks = nn.ModuleList()
+        layer = 3
+        r = 1.2
+        out_dim = 2048
+        in_dim = 4096
+        for block_i, block in enumerate(config.concat):
+            # Apply the good block function defining tf ops
+            
+            self.concat_blocks.append(block_decider(block,
+                                                    r,
+                                                    in_dim,
+                                                    out_dim,
+                                                    layer,
+                                                    config))
+    
+
         return
 
     def forward(self, batch):
@@ -304,15 +337,25 @@ class KPFCNN(nn.Module):
 
         # Loop over consecutive blocks
         skip_x = []
+        attan_x = [] ### add attention
         for block_i, block_op in enumerate(self.encoder_blocks):
             if block_i in self.encoder_skips:
                 skip_x.append(x)
+            x = block_op(x, batch)
+            if block_i in self.encoder_attan:
+                attan_x.append(x)
+
+        for block_i, block_op in enumerate(self.attention_blocks):
+            x = torch.cat([x, block_op(attan_x[block_i],batch)], dim=1)
+        
+        for block_i, block_op in enumerate(self.concat_blocks):
             x = block_op(x, batch)
 
         for block_i, block_op in enumerate(self.decoder_blocks):
             if block_i in self.decoder_concats:
                 x = torch.cat([x, skip_x.pop()], dim=1)
             x = block_op(x, batch)
+        
 
         scores = self.detection_scores(batch, x)
         features = F.normalize(x, p=2, dim=-1)

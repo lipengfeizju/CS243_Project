@@ -206,7 +206,7 @@ class ThreeDMatchTestset(data.Dataset):
         return self.num_test
 
 if __name__ == "__main__":
-    dset = ThreeDMatchDataset(root='/data/3DMatch/', split='train', num_node=64, downsample=0.05, self_augment=True)
+    dset = ThreeDMatchDataset(root='./data/3DMatch/', split='train', num_node=64, downsample=0.05, self_augment=True)
     dset[0]
     import pdb
     pdb.set_trace()
